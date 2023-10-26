@@ -35,7 +35,7 @@
 ## INDENT, 缩进
 
 - python 最具特色的就是用缩进来写模块。
-- 缩进的空白数量是可变的，但是所有代码块语句必须包含相同的缩进空白数量，这个必须严格执行。 
+- 缩进的空白数量是可变的，但是所有代码块语句必须包含相同地缩进空白数量，这个必须严格执行。 
 - 建议你在每个缩进层次使用 **单个制表符** 或 **两个空格** 或 **四个空格** , 切记不能混用
 
 ## Variable Types, 变量类型
@@ -48,6 +48,7 @@
 - immutable: number, tuple, string
 - mutable 的对象，如果对对象做了修改，就是在原有内存地址上修改
 - immutable对象的修改，实际上会在另一个内存地址上放置新的数据
+- mutable和immutable是**十分具有特色的特征**，如果不注意这个特征，可能会带来意外的错误
 
 ### number
 
@@ -89,10 +90,15 @@ f-string的用法：
 - list.reverse() 返回新列表
 - list.sort() 原地修改，而global sorted() 返回新列表
 
+### queue.Queue
+
+我不喜欢用这个，建议用下面的collections.deque
+
 ### collections.deque
 
 - 和list差不多，api基本一致，但是deque很方便
 - pop, popleft, append, appendleft
+- extend, extendleft
 
 
 ### tuple
@@ -100,7 +106,7 @@ f-string的用法：
 - 和list差不多，但是immutable
 - 不能修改，但可以连接生成新的tuple
 
-### dick (Hashmap)
+### dict (Hashmap)
 
 - key 必须是 immutable
 - `dict[key] = value` 可以用来创建k-v
@@ -121,7 +127,19 @@ print(dct[1])  # --> 'value'
 
 ### collections.Counter
 
+Counter继承自dict类型，相当于是一种只用来计数的hashmap。以下是一部分常用操作：
 
+- 可选的初始化：`c=Counter('ababc')`
+- 查询：`c['a']`
+- 修改：`c['a'] += 1`
+- 删除：`del c['a']`
+- 清空：`c.clear()`
+- 总数：`c.total() == sum(c.values())`，values是dict的方法
+- 合并两个Counter：`c.update(d), d is Counter`
+- 减另一个Counter：`c.subtract(d)`
+- 查询前若干个，未指定则按出现次数排序所有：`c.most_common(k)`
+- 返回键的列表：`sorted(c)`
+- 返回键重复值的次数的列表，如`c.elements() == list("aabbc")`
 
 ### collections.defaultdict
 
@@ -220,8 +238,7 @@ def func(*args, **kwargs):
 ```
 
 - 返回的值可以写多个，会自动封包成一个tuple
-
-
+- 在声明函数使用参数时，可以标注参数类型，方便被调用：`def func(x: [int])` 建议传入一个整数列表
 
 ### lambda, 是匿名函数
 
@@ -301,12 +318,400 @@ print(int2(s))
 print(int2_self(s))
 ```
 
+## OOP, Object-Oriented Programming, Python面向对象
+
+### Define Class and Create Instance, 定义类并且生成实例
+
+- 通常类名要大写
+- 所有Python的类，都继承自object
+
+```python
+class Student: 
+    # __init__ 是初始化的函数，这里面都是properties
+    # __init__ 的第一个参数必须是self，表示inst本身，并且调用的时候不用传递这个arg
+    def __init__(self, name, number, age): 
+        self.name = name
+        self.number = number
+        self.age = age
+```
+
+- 如果没有定义任何属性，则可以`alice = Student()`； 
+- 如果定义了参数，则应当`alice = Student('Alice', 114514, 19)`;
+- 应该在定义类的时候，将属性和方法都写出来。当然也可以在外部给一个inst增加未定义的属性，但是这样不安全，可读性差
+
+### OOP Concepts, 面向对象编程的一些概念
+
+和面向对象相对的是面向过程。如果采用面向对象的程序设计思想，我们首选思考的不是程序的执行流程，而是把数据被视为一个对象。
+
+面向对象里最重要的就是Class和Instance。Class是抽象的模板，形容了一系列instance；而instance是一个个对象。
+
+对象包括两大点：属性(attribute/property)和方法(method)。 
+比如定义一个类student，“Alice”和“Bob”是这个类下的两个实例。在类中包括了属性：学号，身高，体重，年龄；还有方法（函数），比如吃饭，学习。
+
+---
+
+面向对象的几个特点：
+
+- 数据封装，限制访问，继承和多态
+
+---
+
+#### Data Encapsulation, 数据封装
+
+> “封装也称为信息隐藏,是利用抽象数据类型将数据和基于数据的操作封装在一起,使其构成一个不可分割的独立实体,数据被保护在抽象数据类型的内部,尽可能地隐藏内部的细节,只保留**一些对外接口**使之与外部发生联系。” 
+> 
+> 好处：
+> 1. 控制存取属性值的语句来避免对数据的不合理的操作
+> 2. 一个封装好的类，是非常容易使用的
+> 3. 代码更加模块化，增强可读性
+> 4. 隐藏类的实现细节，让使用者只能通过程序员规定的方法来访问数据
+
+通过在class里定义一些方法（一些函数），来实现各种接口。比如定义打印年龄的函数：
+
+``` python
+    # 除了第一个参数是self外，其他和普通函数一样
+    def print_age(self): 
+        print(f"{self.name}的年龄是：{self.age}")
+```
+
+使用方法的方法：
+
+``` python
+alice.print_age()
+```
+
+---
+
+#### Access Control, 限制访问
+
+为了使得内部属性不被随意访问和修改（但是可以初始化），在创建类的属性时应这样：
+
+```python
+class Student(object): 
+    def __init__(self, name, age):
+        self.__name = name
+        self.__age = age
+```
+
+在Python中，实例的变量名如果以`__`开头，就变成了一个私有变量（private），只有内部可以访问，外部不能read。
+
+- `__name__`这种是可以直接访问的特殊变量；
+- `__name`这种是private变量；
+- `_name`这种是在class中表示是公开的，但是不建议随意访问。*按照约定俗成的规定，当你看到这样的变量时，意思就是，“虽然我可以被访问，但是，请把我视为私有变量，不要随意访问”。*
+- 单下划线`_name`命名的变量（包括类，函数，普通变量）不能通过**from module import **导入到另外一个模块中。
+- 双下划线开头的实例变量是不是一定不能从外部访问呢？其实也不是。不能直接访问`__name`是因为Python解释器对外把`__name`变量改成了`_Student__name`，所以，仍然可以通过`_Student__name`来访问`__name`变量：`alice._Student__name`。但是不同版本的Python解释器可能会把`__name`改成不同的变量名。
+- 如果我直接给私有变量赋值会怎么样呢？基于上一条，如果我在类外直接给`instance.__attr`赋值，其实会有两个属性：`__attr, _ClassName__attr`————后者才是我们想要的
+
+上面的写法带来的问题：除了初始化，否则无法赋值；全程都无法读取
+
+---
+
+Java-like 的解决方案：通过定义 get 和 set 函数来解决问题：
+
+- 副作用：顺便可以在 set 的时候校验参数一致性！
+
+```python
+class Student(object):
+    def __init__(self, name, age):
+        self.__grade = None
+        self.name = name
+        self.age = age
+
+    def set_grade(self, num):
+        self.__grade = num
+
+    def print_age(self):
+        print(f"{self.name}的年龄是：{self.age}")
+```
+
+---
+
+Pythonic 的解决方案：使用 @property 和 @[attr].setter
+
+```python
+class Student(object):
+
+    def __init__(self):
+        self.__score = None
+
+    @property
+    def score(self):
+        return self.__score
+
+    @score.setter
+    def score(self, i):
+        # check value
+        if not isinstance(i, int):
+            raise ValueError('int only, you fool')
+        elif 0 <= i <= 100:
+            pass
+        else:
+            raise ValueError('[0, 100] only, you fool')
+        # set value
+        self.__score = i
+
+
+instA = Student()
+instA.score = 76   # set score
+print(instA.score) # get score
+```
+
+有几个要注意的点：
+
+1. 必须先写`@property`把一个方法变成属性，才能写`@attr.setter`，调换顺序不行；而且应该是先把某个method变成attr了，接下来才能写`@attr.setter`，不同名是不行的；
+2. 这里不用担心两个函数重复名字的问题，调用的时候都直接写属性名字就行（不该加下划线）；
+3. 现在在外部可以和之前一样赋值和读取了
+4. `@property`和`@*.setter`都写是可读写，如果只写第一个就是只读————可以用只读这个属性来实现一些需求
+5. 假如是只读的，就不能给它赋值，包括在`__init__`里定义并初始化也不行
+6. api和实例变量不能同名，否则解释器不知道是调用api还是变量名，就会无限递
+
+#### Inheritance and Polymorphism, 继承与多态
+
+**继承**：可以从一个父类、基类（base class）超类（**Super class**）创建子类（subclass）。
+
+继承可以把父类的所有功能都直接拿过来，这样就不必重零做起，子类只需要新增自己特有的方法，也可以**把父类不适合的方法覆盖重写**。
+
+继承什么？公有的属性和方法：
+
+- 假如子类和父类都有同样名字的方法，子类的会覆盖父类的（多态）；
+- 假如一个inst属于某个subclass，那他也属于base class；
+
+```python
+class Human:
+    pass
+
+class Student(Human):
+    pass
+# 学生单继承自人类
+```
+
+**多态**：指为不同数据类型的实体提供统一的接口，同一个行为具有多个不同表现形式或形态的能力。
+
+多态存在的三个必要条件：
+
+- 继承
+- 重写
+- ~~父类引用指向子类对象：**Parent p = new Child();**~~
+
+![](https://www.runoob.com/wp-content/uploads/2013/12/2DAC601E-70D8-4B3C-86CC-7E4972FC2466.jpg)
+
+在上图中，每个子类可以重写(override)父类的方法。
+
+---
+
+著名的“开闭”原则：
+
+- 对扩展开放：允许新增`BaseClass`的子类；
+- 对修改封闭：不需要修改依赖`BaseClass`类型的`draw()`等函数。
+
+#### Duck Typing, 鸭子类型
+
+> 鸭子类型（英语：duck typing）是动态类型的一种风格。在这种风格中，一个对象有效的语义，不是由继承自特定的类或实现特定的接口，而是由"当前方法和属性的集合"决定。
+>
+> 当看到一只鸟走起来像鸭子、游泳起来像鸭子、叫起来也像鸭子，那么这只鸟就可以被称为鸭子。
+>
+> ——James Whitcomb Riley
+
+Python这种动态语言不要求严格的继承，假如我新建一个class，不从animal继承，直接从object继承，再给他写一个run方法，那么也可以run。
+
+我觉得都可以理解，因为是根据inst所在的class来找run的。只要这inst有run这个名字的方法，就都可以用。
+
+
+## Exception, 异常处理
+
+
+
+
 
 # Advanced Features
 
-## Variables, Objects and Memory
+## Variables, Objects and Memory, 变量 - 对象 - 内存
 
-## Closure & Decorator
+- python中，万物皆对象。 
+- python中不存在所谓的传值调用，一切传递的都是对象的引用，也可以认为是传址。
+- 对于mutable: 类似C++的引用传递，将 a 真正的传过去，修改后fun外部的a也会受影响
+- 对immutable: 类似C++的值传递，传递的只是a的值，没有影响a对象本身
+
+``` python
+
+def myfunc(t):
+    t += 2
+    print(id(t))
+
+
+a = 1
+print(id(a))
+myfunc(a)
+print(a)
+print(id(a))
+--------------------
+2543723217136
+2543723217168
+1
+2543723217136
+# 因为 *不可变对象number* ，所以只传入了内存里的值；
+# 可以看到a对应的地址没变，函数myfunc没有改变a对应的地址的内存里的内容，而是另外找了个地方
+# 最后 a 对应的地址里面的内存内容还是 1 
+
+-----------------------------------------------
+
+def myfunc2(t):
+    t.append('fuck')
+    print(id(t))
+
+
+b = [1, 2, 'a']
+print(id(b))
+print(myfunc2(b))
+print(b)
+print(id(b))
+--------------------
+2345014392832
+2345014392832
+None
+[1, 2, 'a', 'fuck']
+2345014392832
+# 可以看到 *可变对象list* 所指的内存地址是不变的
+
+```
+
+还有一个特性，python为小int做了优化，有一个[-5, 256]的小整数池，在解释器启动的时候就创建了，可以避免频繁使用对象（假设频繁使用小整数）的创建和销毁。所有小整数对象都指向固定的地址。
+
+``` python
+a = 1
+print(id(a))
+
+b = 100
+print(id(b))
+
+b -= 99
+print(id(b))
+----------
+1767367180528
+1767367183696
+1767367180528
+```
+
+## Closure & Decorator, 闭包和装饰器
+
+## Multiple Inheritance & MRO, 多继承和继承顺序 
+
+## Singleton in Python, 如何实现单例模式?
+
+## Tail Recursion, 尾递归
+
+通常的递归，会导致函数栈帧不断增加，直至达到最大限值——可能伴随着内存不足。Python 默认的最大递归深度为1000，但是可以手动修改。
+
+一个递归的例子是求前n项正整数的和，或者乘积。
+
+```python
+def func(x):
+    if x == 1:
+        return x
+    return x + func(x-1)
+```
+
+上面的例子意味着每一层栈帧都依赖于更上一层函数栈帧的计算结果。但是我们可以将这个函数优化成尾递归：函数返回值只由递归函数本身组成。
+
+```python
+def func(x, pre=0):
+    if x == 1:
+        return x+pre
+    return func(x-1, x+pre)
+
+print(func(5))  # --> 15
+```
+
+- 尽管如此，有些语言没有对尾递归做优化。
+- Python/CPython解释器就没有优化，上一段的写法仍然会导致栈帧溢出。
+- gcc -O2 级别的优化就会做优化
+
+[以下内容在参考内容的基础上做了一点改进：](https://www.jb51.net/article/247073.htm)
+
+``` python
+import sys
+
+
+# 一个异常，用于传递参数
+class TailRecursionError(BaseException):
+    def __init__(self, args, kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
+def tail_rec_opt(func):
+    def _opt_exec(*args, **kwargs):
+        f = sys._getframe()
+
+        if f.f_back and f.f_back.f_back and f.f_back.f_back.f_code == f.f_code:
+            raise TailRecursionError(args, kwargs)
+
+        while True:
+            try:
+                return func(*args, *kwargs)
+            except TailRecursionError as e:
+                args = e.args
+                kwargs = e.kwargs
+
+    return _opt_exec
+
+
+# 一个递归函数，尾递归形式，用于计算1+2+...n的和
+@tail_rec_opt
+def recursion(n, pre=0):
+    if n == 1:
+        return pre + 1
+    else:
+        return recursion(n - 1, pre + n)
+
+
+print(recursion(5))
+```
+
+- 尾递归实际上，是在装饰器里的while循环里完成的
+
+在执行的过程中，首先栈帧会变成下面的样子：
+
+| 层数编号 | 栈帧函数            | 要求返回值             |
+|------|-----------------|-------------------|
+| 4    | _opt_exec(4, 5) |                   |
+| 3    | func(5, 0)      | opt_exec(4, 5)    |
+| 2    | _opt_exec(5, 0) | return func(5, 0) |
+| 1    | module          | -                 |
+
+- 此时帧4会触发异常，因为和帧2的函数名一样。此时会结束函数调用，销毁帧4，并且返回一次递归函数计算的结果：`e(4, 5)`
+- 此时异常会向下返回，直至回到帧2的return部分
+- return的异常将被try-except捕捉，并修改帧2中的args和kwargs
+
+此时将变成：
+
+| 层数编号 | 栈帧函数            | 要求返回值             |
+|------|-----------------|-------------------|
+| 2    | _opt_exec(4, 5) | return func(4, 5) |
+| 1    | module          | -                 |
+
+并继续运算，变成：
+
+| 层数编号 | 栈帧函数            | 要求返回值             |
+|------|-----------------|-------------------|
+| 4    | _opt_exec(3, 4) |                   |
+| 3    | func(4, 5)      | opt_exec(3, 4)    |
+| 2    | _opt_exec(4, 5) | return func(4, 5) |
+| 1    | module          | -                 |
+
+继续运行循环，直至：
+
+| 层数编号 | 栈帧函数             | 要求返回值              |
+|------|------------------|--------------------|
+| 3    | func(1, 14)      |                    |
+| 2    | _opt_exec(1, 14) | return func(1, 14) |
+| 1    | module           | -                  |
+
+这次帧3直接返回了15，因此整个函数返回了15，递归结束。
+
+
+
+
 
 # Built-in Packages & Modules
 
