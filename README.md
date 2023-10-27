@@ -518,6 +518,43 @@ Python这种动态语言不要求严格的继承，假如我新建一个class，
 
 我觉得都可以理解，因为是根据inst所在的class来找run的。只要这inst有run这个名字的方法，就都可以用。
 
+### __magic_methods__
+
+> 在Python中有一些双下划线作为前缀和后缀的函数，一般称呼他们为*魔法方法/语法糖*，因为的确非常方便。
+
+#### __str__, __repr__
+
+有的时候，我们希望当我们print(obj)的时候能输出一些特殊信息。
+
+比如我有一个ListNode类，和一个LinkedList类。我希望当我在打印一个LinkedList对象时，能打印链表中的所有元素。
+
+但如果直接print，可能会显示这样的`<__main__.A object at 0x0000023EFCD14AF0>`
+
+为了增加可读性，我们可以在类里定义一个：
+
+``` python
+     def __str__(self):
+        return f"{self.name} is Auto"
+```
+
+这样print的时候就好看多了。
+
+`__str__`是面向用户的，即用户在控制台输入`print(obj)`即可返回友好的提示。
+
+`__repr__`差不多，但是是面对开发者的。在控制台直接输入obj回车，也会返回：
+
+`<__main__.Auto object at 0x00000289E3335420>`
+
+为了增加可读性，我们在类里重构一下：
+
+```python
+    __repr__ = __str__
+```
+
+这样就更方便开发者。
+
+此时`obj.__repr__`是一个和`__str__(self)`绑定的函数，`obj.__repr__()`是友好的提示。
+
 
 ## Exception, 异常处理
 
