@@ -13,6 +13,8 @@
 - [ ] slice
 - [ ] enumerate, zip
 - [ ] range
+- [ ] more about super
+- [ ] more singleton
 
 # Basic Usage
 
@@ -519,8 +521,31 @@ Python这种动态语言不要求严格的继承，假如我新建一个class，
 
 ## Exception, 异常处理
 
+- Python中一切异常都继承自`BaseException`，具体的可以查看ErrorClass的列表。
+- 可以自定义一个异常，但至少要继承自`BaseException`
+- 可以同时捕捉多种异常
 
+异常可以通过语句来处理：
 
+<img src="https://www.runoob.com/wp-content/uploads/2019/07/try_except_else_finally.png" style="zoom: 50%;" />
+
+``` python
+try:
+    statements
+except (A-exception, B-exception...) as e:
+    statements
+else:
+    statements
+finally:
+    statements
+```
+
+---
+
+可以主动抛出异常，通过raise和assert：
+
+- `raise SomeError([string])`，*似乎大多数都支持在这里传入一个字符串，存疑*
+- `assert expression[, string]`, 但只能抛出`AssertionError`
 
 
 # Advanced Features
@@ -594,9 +619,195 @@ print(id(b))
 
 ## Closure & Decorator, 闭包和装饰器
 
-## Multiple Inheritance & MRO, 多继承和继承顺序 
+## Multiple Inheritance, MRO and super(), 多继承, 继承顺序和super()函数
+
+- MRO, Method Resolution Order
+- 多继承，是指在继承的时候可以继承多个类：`class A(B, C, D)`
+- MRO解决了多继承的复杂情况下，调用方法到底调用的是哪个类的方法的问题。
+- MRO类似BFS，相对的是DFS。
+- MRO在python体现为`ClassName.__mro__`
+
+![img](https://i.imgur.com/G3Gdnkf.png)
+
+在上图中，箭头指向父类。如果有多个子类继承了同一个父类，那么这个父类则放在它能够出现的所有位置中最左的位置。
+
+MRO是一个列表，满足原则：
+
+1. 子类永远在父类前面；
+
+2. 如果有多个父类，会根据它们在列表中的顺序被检查；
+
+3. 如果对下一个类存在两个合法的选择，选择第一个父类；比如`A(B, C)`，选择B；
+
+入度为0：没有箭头指向一个类。
+
+在解析上图时，先找入度为0的类，并剪掉所有与之相连的箭头；两个符合条件的类，先整左边的。所以就能得到`[A, B, C, D, E, F, Object]`。
+
+---
+
+super返回一个proxy object，可以借此调用被重写的方法。
+
+- `super(type, object_or_type=None)`
+- object_or_type 决定了mro的搜索起点
+- 如果一个mro是DCBA，object；obj_or_type指定为C，则会在BAobject里搜索
+- mro指的是obj_or_type的mro
+- 如果第二个参数给出，并且是obj，那么必须满足`isinstance(obj, type)`
+- 如果第二个参数给出，并且是typ，那么必须满足`issubclass(type_arg_2, type)`
+- 缺省参数`super()`代表当前类和self
 
 ## Singleton in Python, 如何实现单例模式?
+
+> 这部分内容参考自 [python实现单例模式的5种方法](https://zhuanlan.zhihu.com/p/212234792), 但有一些修改
+
+### import
+
+通过import导入的module是天然的单例模式，因为只会导入一次
+
+### decorator
+
+- 装饰器装饰了一个类，在这个类的内存空间里，加入了一个闭包：闭包中记录了实例。
+- 用一个k-v记录实例
+- 如果有实例，k-v就是：class本身 - single instance
+- class本身，是因为类本身在一个不可变的内存地址上
+
+```python
+def singleton(cls):
+    instance = {}
+    def inner(*args, **kw):
+        if cls not in instance:
+            instance[cls] = cls(*args, **kw)
+        return instance[cls]
+    return inner
+
+@singleton
+class MyClass:
+    pass
+```
+
+但以上的方法是线程不安全的，多个线程同时判断，有可能都判断为 暂时还没有实例 ；所以可以加一把锁
+
+```python
+from threading import RLock
+single_lock = RLock()
+
+def singleton(cls):
+    instance = {}
+    def inner(*args, **kw):
+        with single_lock:
+            if cls not in instance:
+                instance[cls] = cls(*args, **kw)
+            return instance[cls]
+    return inner
+```
+
+### class attr
+
+通过类变量，来检查是否存在实例
+
+```python
+from threading import RLock
+
+
+class Singleton:
+    single_lock = RLock()
+
+    def __init__(self, name):
+        self.name = name
+
+    @classmethod
+    def instance(cls, *args, **kwargs):
+        with cls.single_lock:
+            if not hasattr(cls, "_instance"):
+                cls._instance = cls(*args, **kwargs)
+        return cls._instance
+
+
+single_1 = Singleton.instance('第1次创建')
+single_2 = Singleton.instance('第2次创建')
+
+print(single_1 is single_2)  # True
+print(single_2.name)         # 第1次创建
+```
+
+### `__new__`
+
+因为new才是真正的构造函数，所以可以在这个层面上作出修改。
+
+```python
+from threading import RLock
+
+
+class Singleton:
+    single_lock = RLock()
+
+    def __init__(self, name):
+        self.name = name
+
+    def __new__(cls, *args, **kwargs):
+        with cls.single_lock:
+            if not hasattr(cls, "_instance"):
+                cls._instance = super().__new__(cls)
+
+        return cls._instance
+
+
+single_1 = Singleton('第1次创建')
+print(single_1.name)  # 第1次创建
+
+single_2 = Singleton('第2次创建')
+print(single_1.name, single_2.name)  # 第2次创建 第2次创建
+
+print(single_1 is single_2)  # True
+```
+
+- 但这么做有个问题，因为init依赖于new的返回值，所以在第二次创建实例时，会对已有的实例重新初始化。
+- 为了解决这个问题，还需要对init做修改
+- 如果已经被初始化了，就不再初始化
+
+```python
+def __init__(self, name):
+        if hasattr(self, 'name'):
+            return
+        self.name = name
+```
+
+### metaclass
+
+- class Singleton(metaclass=SingletonType) 这行代码定义了一个类，
+- 这个类是元类SingletonType 的实例，是元类SingletonType的__new__构造出来的，
+- Singleton是实例，那么Singleton('第1次创建')就是在调用元类SingletonType 的__call__方法，__call__方法可以让类的实例像函数一样去调用。 
+- 在__call__方法里，cls就是类Singleton，
+- 为了创建对象，使用super来调用__call__方法，而不能直接写成cls(*args, **kwargs), 
+- 这样等于又把SingletonType的__call__方法调用了一次，形成了死循环。
+
+```python
+from threading import RLock
+
+
+class SingletonType(type):
+    single_lock = RLock()
+
+    def __call__(cls, *args, **kwargs):   # 创建cls的对象时候调用
+        with SingletonType.single_lock:
+            if not hasattr(cls, "_instance"):
+                cls._instance = super(SingletonType, cls).__call__(*args, **kwargs)     # 创建cls的对象
+
+        return cls._instance
+
+
+class Singleton(metaclass=SingletonType):
+    def __init__(self, name):
+        self.name = name
+
+
+single_1 = Singleton('第1次创建')
+single_2 = Singleton('第2次创建')
+
+print(single_1.name, single_2.name)     # 第1次创建 第1次创建
+print(single_1 is single_2)     # True
+```
+
+
 
 ## Tail Recursion, 尾递归
 
