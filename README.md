@@ -40,6 +40,53 @@
 - 缩进的空白数量是可变的，但是所有代码块语句必须包含相同地缩进空白数量，这个必须严格执行。 
 - 建议你在每个缩进层次使用 **单个制表符** 或 **两个空格** 或 **四个空格** , 切记不能混用
 
+## Operator, 操作符
+
+- `+-*, **`
+- `/` 直接求除数
+- `//`取整部分，`%`取余
+- `:=` 边赋值边计算
+
+---
+
+| 学名 | 符号 | 解释                  |
+|----|----|---------------------|
+| 与  | &  | ab都为1则返回1，否则为0      |
+| 或  | \| | 有一个为1，就返回1          |
+| 异或 | ^  | ab不同则返回1，相同返回0      |
+| 取反 | ~  | 按位取反                |
+| 左移 | << | a<<3，左移三位，高位丢弃，低位补0 |
+| 右移 | >> | 同上                  |
+
+---
+
+- `and, or, not`
+
+---
+
+- `a is b`用于判断内存地址是否一致
+- `a == b` 判断值
+
+---
+
+
+| 运算符                      | 描述                                |
+|--------------------------|-----------------------------------|
+| **                       | 指数 (最高优先级)                        |
+| ~ + -                    | 按位翻转, 一元加号和减号 (最后两个的方法名为 +@ 和 -@) |
+| * / % //                 | 乘，除，取模和取整除                        |
+| + -                      | 加法减法                              |
+| >> <<                    | 右移，左移运算符                          |
+| &                        | 位 'AND'                           |
+| ^\|                      | 位运算符                              |
+| <= < > >=                | 比较运算符                             |
+| <> == !=                 | 等于运算符                             |
+| = %= /= //= -= += *= **= | 赋值运算符                             |
+| is is not                | 身份运算符                             |
+| in not in                | 成员运算符                             |
+| not and or               | 逻辑运算符                             |
+
+
 ## Variable Types, 变量类型
 
 ### overall features, 通用特征
@@ -133,6 +180,7 @@ Counter继承自dict类型，相当于是一种只用来计数的hashmap。以�
 
 - 可选的初始化：`c=Counter('ababc')`
 - 查询：`c['a']`
+- 对于一个不存在的键，默认返回0
 - 修改：`c['a'] += 1`
 - 删除：`del c['a']`
 - 清空：`c.clear()`
@@ -145,7 +193,11 @@ Counter继承自dict类型，相当于是一种只用来计数的hashmap。以�
 
 ### collections.defaultdict
 
+也是继承自dict类型。
 
+- 使用的时候应该是`a = defaultdict(list)`
+- 如果访问一个不存在的key，就会返回一个空列表（根据选择的类型）
+- 除了常规赋值，也可以使用`a[1].append(2)`这种形式（根据选择的类型）
 
 ### set
 
@@ -160,51 +212,26 @@ Counter继承自dict类型，相当于是一种只用来计数的hashmap。以�
 - dict comprehensions: `{i:i**2 for i in range(5) if i%2}`
 - generator comprehensions: `(i**2 for i in range(5) if i%2)`
 
-## Operator, 操作符
+## Iterable, Iterator and Generator, 可迭代, 迭代器 和 生成器
 
-- `+-*, **`
-- `/` 直接求除数
-- `//`取整部分，`%`取余
-- `:=` 边赋值边计算
+![](https://i.imgur.com/s8eYkp8.jpg)
 
----
+介绍一些概念：
 
-| 学名 | 符号 | 解释                  |
-|----|----|---------------------|
-| 与  | &  | ab都为1则返回1，否则为0      |
-| 或  | \| | 有一个为1，就返回1          |
-| 异或 | ^  | ab不同则返回1，相同返回0      |
-| 取反 | ~  | 按位取反                |
-| 左移 | << | a<<3，左移三位，高位丢弃，低位补0 |
-| 右移 | >> | 同上                  |
-
----
-
-- `and, or, not`
-
----
-
-- `a is b`用于判断内存地址是否一致
-- `a == b` 判断值
-
----
-
-
-| 运算符                      | 描述                                |
-|--------------------------|-----------------------------------|
-| **                       | 指数 (最高优先级)                        |
-| ~ + -                    | 按位翻转, 一元加号和减号 (最后两个的方法名为 +@ 和 -@) |
-| * / % //                 | 乘，除，取模和取整除                        |
-| + -                      | 加法减法                              |
-| >> <<                    | 右移，左移运算符                          |
-| &                        | 位 'AND'                           |
-| ^\|                      | 位运算符                              |
-| <= < > >=                | 比较运算符                             |
-| <> == !=                 | 等于运算符                             |
-| = %= /= //= -= += *= **= | 赋值运算符                             |
-| is is not                | 身份运算符                             |
-| in not in                | 成员运算符                             |
-| not and or               | 逻辑运算符                             |
+1. 可迭代协议: 实现了`__iter__()`方法
+2. 迭代器协议: 实现了`__iter__()`和`__next__()`方法
+3. **Iterable, 可迭代对象**: 实现了`__iter__()`方法的一个类，往往预先知道长度和数据；
+4. `container`：**容器**通常都是可迭代对象，容器包括list, tuple, dict这些
+5. `container`：**容器**，只能用来装元素，比如列表、元组。大部分容器都实现了`__iter__()`方法；但是不实现`__next__()`方法就不能 *取* 元素；
+6. **Iterator, 迭代器**: 继承自`iterable`，实现了`__iter__()`和`__next__()`方法的类。是**惰性**的，只有通过`next`才能返回元素；
+7. 惰性：通过next来一个一个地返回里面的元素
+8. 内置函数`iter()`可以把可迭代对象变成迭代器，因为加了一个`__next__()`方法。
+9. 比如`for mem in list`，或者`enumerate`其实是先使用了`list.__iter__()`生成一个迭代器，然后不断`next()`，直到`ErrorIteration`停止；
+10. `generator`：**生成器**，也能实现实现了`__iter__()`和`__next__()`方法，但更像是一个函数而不是一个类；属于迭代器，但是更高级更简洁；
+11. `generator`更优雅，可以这么定义：
+    - 一个函数中通过`yield`返回元素，
+    - 推导式中用`()`代替`[]`。
+    - LAZY: 并不提前计算所有值，而是在需要的时候才计算，因此节约内存；
 
 ## Conditional Statement, 条件语句
 
@@ -522,13 +549,13 @@ Python这种动态语言不要求严格的继承，假如我新建一个class，
 
 > 在Python中有一些双下划线作为前缀和后缀的函数，一般称呼他们为*魔法方法/语法糖*，因为的确非常方便。
 
-#### __str__, __repr__
+#### `__str__`, `__repr__`
 
 有的时候，我们希望当我们print(obj)的时候能输出一些特殊信息。
 
 比如我有一个ListNode类，和一个LinkedList类。我希望当我在打印一个LinkedList对象时，能打印链表中的所有元素。
 
-但如果直接print，可能会显示这样的`<__main__.A object at 0x0000023EFCD14AF0>`
+但如果直接print，可能会显示这样的`<__main__.ClassName object at 0x0000023EFCD14AF0>`
 
 为了增加可读性，我们可以在类里定义一个：
 
@@ -539,22 +566,167 @@ Python这种动态语言不要求严格的继承，假如我新建一个class，
 
 这样print的时候就好看多了。
 
-`__str__`是面向用户的，即用户在控制台输入`print(obj)`即可返回友好的提示。
+- `__str__`是面向用户的，即用户在控制台输入`print(obj)`即可返回友好的提示。
+- `__repr__`差不多，但是是面对开发者的。在控制台直接输入obj回车，也会返回：`<__main__.Auto object at 0x00000289E3335420>`
+- 为了增加可读性，我们在类里重构一下：
 
-`__repr__`差不多，但是是面对开发者的。在控制台直接输入obj回车，也会返回：
-
-`<__main__.Auto object at 0x00000289E3335420>`
-
-为了增加可读性，我们在类里重构一下：
-
-```python
+``` python
     __repr__ = __str__
 ```
 
-这样就更方便开发者。
+此时`obj.__repr__`是一个和`__str__`绑定的函数，这样`obj.__repr__()`也能返回友好的提示。
 
-此时`obj.__repr__`是一个和`__str__(self)`绑定的函数，`obj.__repr__()`是友好的提示。
+#### `__getattr__`
 
+正常情况下，当调用不存在的属性时会报错。但是我们可以这样定义，让class对特定的一些属性作出响应：
+
+``` python
+    def __getattr__(self, attr): 
+        if attr == 'score': 
+            return stm
+```
+
+但是对于未考虑到的attr，为了也作出响应，可以这么写：
+
+``` python
+    def __getattr__(self, attr): 
+        if attr == 'score': 
+            return something
+        raise AttributeError('you fool')
+```
+
+#### `__getitem__`
+
+对于iterable来说，可以通过`list[index]`的方式访问value。如果我们希望一个自定义的类也能支持这种功能，就需要通过这个方法来重载`[]`运算符。
+
+这里还有两个具体的方式：
+- 通过方括号索引
+- 通过方括号切片
+
+因此要在定义函数时区分这两种情况。
+
+``` python
+    def __getitem__(self, n):
+        if isinstance(n, int):  # n是索引
+            return self.items[n]
+        if isinstance(n, slice):  # n是切片
+            start = n.start
+            stop = n.stop
+            return self.items[n.start:n.stop]
+```
+
+#### `__setitem__`
+
+对于dict来说，可以通过`dict[key] = value`的方式创建一个键值对。如果我们希望一个自定义的类也能支持这种功能，就需要通过这个方法来重载`[]`运算符。
+
+```python
+def __setitem__(self, k, v): 
+    self.put(k, v)
+```
+
+#### `__contains__`
+
+例如我自定义了一个链表，我希望判断某个元素是否在列表中，如 `if x in linked_list`，可以通过这个函数重载in运算符。
+
+#### `__slots__`
+
+> [Python Wiki](https://wiki.python.org/moin/UsingSlots)
+>
+> 一种写在类内部的声明，通过预先声明实例属性等对象并移除实例字典来节省内存。
+> 虽然这种技巧很流行，但想要用好却并不容易，最好是只保留在少数情况下采用，例如极耗内存的应用程序，并且其中包含大量实例。
+> ——Python Official Doc
+
+- 如果正常给实例增加属性（通过init，或者在运行时动态增加属性），都会给对象产生两个属性：`__dict__ & __weakref__`。
+- `__dict__`里面是属性 - 具体内容的kv对
+- dict导致了：访问速度慢，作为动态变量不安全
+
+- 但是使用`__slots__`就不会创建以上两个属性
+- 更加安全，访问速度更快（直接写到内存里），节约内存空间
+- 可以禁止运行时动态增加属性
+
+在定义类的时候，增加一个类属性( **最好是tuple，否则会产生问题** )：
+
+```python
+class Human:
+    __slots__ = ('name', 'age', '__salary')
+```
+- 现在这个类的实例就只能有这两个属性，不能增加更多了。
+- 如果赋予slots以外的属性会报错
+
+---
+
+`__slots__`有一个继承相关的特点：
+
+- 子类继承父类的时候会继承`__slots__`, 但如果子类不定义`__slots__`的话就不会起作用，仍然可以增加属性，会创建`__dict, weakref__`
+- 如果子类想保持父类里的限制，可以定义一个`__slots__ = tuple()`，相当于才能激活父类里的限制
+- 子类可以再增加新的限制
+
+## Module & Package, 模块和包
+
+### Module
+
+模块通常是一个定义对象和语句的文件，一般是定义函数。比如模块文件`mymodule.py`里定义了函数`myfunc`，在其他位置里调用方法：
+
+``` python
+import mymodule
+import mymodule as mm # 我猜如果这两句话同时出现，仍然只会导入一次（py不会重复导入），但是使用原名和昵称 *确实* 都行
+---
+mm.myfunc(args)
+
+-------------------------
+from mymodule import myfunc [as xxx] # 就可以不加module.了，而且可以自定义名字
+from mymodule import *      # 全部导入
+myfunc(args)
+```
+
+### Package
+
+- 包就是一个文件夹 
+- 包是一个分层次的文件目录结构，它定义了一个由模块及子包，和子包下的子包等组成的 Python 的应用环境。
+- **里面必须包含__init__.py，里面可以是空的**
+- 如果在PyCharm里新建一个软件包，里面自带一个`__init__.py`
+
+调用方法：
+
+- 在某处有一个主程序，在同级目录里还有一个包（文件夹），这是前提；
+- 导入方法：
+  - `from package_name import file_name(推荐使用)`
+  - `import package_name.file_name`
+  - `from package.file import func(然后就可直接用函数名了)`
+
+---
+
+在win下文件不分大小写，因此导入可能会有问题。所以一般在`__init__.py`里写一个变量：
+
+``` python
+__all__ = ['file1', 'file2']
+```
+
+示例：模块里定义了一个类：
+
+![](https://i.imgur.com/XBJKAlP.png)
+
+``` python
+from pythonds.basic.Stack import Stack
+```
+
+这是正确的写法。
+
+一个错误写法是：
+
+``` python
+from pythonds.basic import Stack
+```
+
+问题在于：
+
+我是从Stack.py这个文件里导入Stack这个类，所以虽然文件和类重名，但是关系要搞清楚。
+
+### Import Directory
+
+- 从解释器所在的位置开始查找，通常是内置/第三方 的 模块/包
+- 从工作路径里查找
+- `.`代表同一文件夹，当前目录；每多一个点就上一层
 
 ## Exception, 异常处理
 
@@ -962,6 +1134,17 @@ print(recursion(5))
 
 
 # Built-in Packages & Modules
+
+> TODO: 
+> - [ ] weakref: https://zhuanlan.zhihu.com/p/425426122
+> - [ ] threading
+> - [ ] multiprocessing
+> - [ ] re
+> - [ ] time
+> - [ ] bisect
+> - [ ] collections
+> - [ ] functools
+> - [ ] itertools
 
 # Third-Party packages & Modules
 
