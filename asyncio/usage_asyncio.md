@@ -1,6 +1,10 @@
 > 参考文献
-> 
+>
 > [【python】asyncio的理解与入门，搞不明白协程？看这个视频就够了](https://www.bilibili.com/video/BV1oa411b7c9)
+>
+> [Python 3.12.3 asyncio](https://docs.python.org/3/library/asyncio.html)
+>
+> [Python 3.12.3 Coroutines and Tasks](https://docs.python.org/3/library/asyncio-task.html)
 
 # TODO
 
@@ -80,6 +84,8 @@ awaitable对象（常常被简写为aw，aws），可以是coroutine对象、Tas
 # 一个简单的例子
 
 > 从一个简单的例子入手，了解如何使用asyncio异步编程
+>
+> basic_n_coros.py
 
 ## 定义coro
 
@@ -187,7 +193,7 @@ coro2 end.     15:49:43 --- 5.01s elapsed.
 
 ```python
 async def main():
-    await asyncio.gather(*map(func, ['coro1', 'coro2', 'coro3']))
+    await asyncio.gather( *[func(f"coro_{i}") for i in range(10)] )
 ```
 
 注意：
@@ -226,3 +232,12 @@ if __name__ == '__main__':
 2. `asyncio.TaskGroup().create_task()`后并没有被Event Loop调度执行，而是等到退出上下文后才被计划执行。
 
 # 如何获取任务的返回值？
+
+
+
+
+
+
+
+
+

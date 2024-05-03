@@ -2,8 +2,8 @@
 
 > What I will do with this repository: 
 > 
-> - [ ] Python basic usage (basic var types, define func & class, etc.);
-> - [ ] Python advanced features (GIL, singleton, @decorator, etc.);
+> - [x] Python basic usage (basic var types, define func & class, etc.);
+> - [x] Python advanced features (GIL, singleton, @decorator, etc.);
 > - [ ] Powerful built-in modules (multiprocessing, re, threading, etc.);
 > - [ ] Powerful third-party packages (asyncio, requests, selenium, etc.);
 
@@ -14,7 +14,7 @@
 - [ ] enumerate, zip
 - [ ] range
 - [ ] more about super
-- [ ] more singleton
+- [x] more singleton
 
 # Basic Usage
 
@@ -1131,7 +1131,7 @@ print(func(5))  # --> 15
 - Python/CPython解释器就没有优化，上一段的写法仍然会导致栈帧溢出。
 - gcc -O2 级别的优化就会做优化
 
-[以下内容在参考内容的基础上做了一点改进：](https://www.jb51.net/article/247073.htm)
+以下内容在[参考内容](https://www.jb51.net/article/247073.htm)的基础上做了一点改进：
 
 ``` python
 import sys
@@ -1223,7 +1223,7 @@ print(recursion(5))
 > TODO: 
 > - [ ] weakref: https://zhuanlan.zhihu.com/p/425426122
 > - [ ] threading
-> - [ ] multiprocessing
+> - [x] multiprocessing: 在外部
 > - [ ] re
 > - [ ] time
 > - [ ] bisect

@@ -357,19 +357,8 @@ def _consumer(tup):
         time.sleep(3)
 ```
 
+# 序列化问题
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- 在mp的默认实现中（例如mp.Queue, mp.Manager）下的基础都是Pipe，而Pipe就必须序列化后再传递。
+- python默认用pickle库来序列化。
+- pickle库有问题，如果超过4G的对象就会序列化失败
