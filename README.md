@@ -21,9 +21,9 @@
 
 - [x] more singleton
 
-- [ ] copy
+- [x] copy
 
-- [ ] with
+- [x] with
 
   
 
@@ -857,6 +857,8 @@ finally:
 
 ## Variables, Objects and Memory, 变量 - 对象 - 内存
 
+> 及其容易出错的特性，很多时候并没有memcpy，而是reference；所以这进一步引出了shallow copy和deep copy的区别
+
 - python中，万物皆对象。 
 - python中不存在所谓的传值调用，一切传递的都是对象的引用，也可以认为是传址。
 - 对于mutable: 类似C++的引用传递，将 a 真正的传过去，修改后fun外部的a也会受影响
@@ -1226,6 +1228,56 @@ print(recursion(5))
 这次帧3直接返回了15，因此整个函数返回了15，递归结束。
 
 
+
+## Context Manager, 上下文管理器
+
+有这样一类问题，有时我们会申请资源，但如果忘记释放资源就会出问题，比如`lock.acquire()`但不`lock.release()`，`socket.connect()`但不`socket.close()`。
+
+另一类问题是，如果在拥有资源时出现了异常，我们希望仍然能正常释放资源。
+
+以上问题的一个解决方案是使用`try-except-finally`:
+
+```python
+try:
+    socket.connect()
+    socket.send()
+except SomeSocketError:
+    do something
+finally:
+    socket.close()
+```
+
+with…是一种语法糖，内含了try-finally组合，可以自动申请-释放资源。他实际上应用了context manager protocol，通过`__enter__()`申请资源，通过`__exit__()`释放资源，例如文件上下文管理器：
+
+```python
+# a simple file writer object
+
+class MessageWriter(object):
+	def __init__(self, file_name):
+		self.file_name = file_name
+	
+	def __enter__(self):
+		self.file = open(self.file_name, 'w')
+		return self.file
+
+	def __exit__(self, *args):
+		self.file.close()
+
+# using with statement with MessageWriter
+
+with MessageWriter('my_file.txt') as xfile:
+	xfile.write('hello world')
+
+```
+
+还比如在使用锁时常用：
+
+```python
+with lock:  # 可以不as
+    do something
+```
+
+提醒：with内的语句正常执行完才会触发`__exit__()`，如果中间退出/异常，都不会触发。
 
 
 
