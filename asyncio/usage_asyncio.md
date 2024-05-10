@@ -5,10 +5,8 @@
 > [Python 3.12.3 asyncio](https://docs.python.org/3/library/asyncio.html)
 >
 > [Python 3.12.3 Coroutines and Tasks](https://docs.python.org/3/library/asyncio-task.html)
-
-# TODO
-
-- [ ] 线程不安全，如果是非原子操作
+>
+> 
 
 # 如何理解异步框架Asyncio？
 
@@ -214,7 +212,7 @@ coro3 end.     20:51:37 --- 5.00s elapsed.
 
 ### Asyncio.TaskGroup
 
-如果你使用的版本**大于等于Python3.11**，另一种方式是使用`asyncio.TaskGroup`，这是一个异步上下文管理器。当该上下文管理器退出时所有任务都将被等待。示例如下：
+如果你使用的版本**大于等于Python3.11**，另一种方式是使用`asyncio.TaskGroup`，这是一个异步上下文管理器。***当该上下文管理器退出时所有任务都将被等待***。示例如下：
 
 ```python
 async def main():
@@ -231,13 +229,69 @@ if __name__ == '__main__':
 1. `asyncio.TaskGroup().create_task()`和`asyncio.create_task()`签名一样
 2. `asyncio.TaskGroup().create_task()`后并没有被Event Loop调度执行，而是等到退出上下文后才被计划执行。
 
+## 保留对任务的引用
+
+通过`asyncio(.TaskGroup).create_task`后，需要保存一个对task的**强引用**。EventLoop将只保留对任务的弱引用， 未在其他地方被引用的任务可能在任何时候被GC，即使是在它被完成之前。
+
+为了避免任务在执行过程中消失，请将tasks放到一个多项集中:
+
+``` python
+tasks = set()
+for i in range(10):
+    tasks.add(create_task(coro))
+```
+
+
+
 # 如何获取任务的返回值？
 
+> basic_n_coros_with_returns.py
+
+对于Task对象，通过Task.result()可获取返回值。
+
+这更体现了上一个小节的重要性——应当保存对task对象的引用。通过遍历task对象的引用，可以获取他们的结果。
+
+# 异常和取消
+
+> task_cancel.py
+
+Task对象可以通过task.cancel()被取消计划执行，此时该task会raise一个`asyncio.CancelledError`。
+
+推荐在coro中包含异常处理情况，例如：
+
+``` python
+async def coro(args):
+    try:
+        pass
+    except asyncio.CancelledError:
+        pass
+    	raise  # 可以raise，也可以不raise
+    finally:
+        pass
+```
+
+- 在gather中：一个task被取消，不会影响他对应的subtask
+- 在Taskgroup中：当计划执行任务中的一个被取消后，相关的subtask的都会被取消
 
 
 
+# 超时
 
+> cm_timeout.py
 
+有一个上下文管理器，asyncio.timeout(delay)：
 
+- 如果delay为None就不会超时（也没有意义）；
+- 如果设定为一个数字，那这个管理器内的所有task都应该在这个时间内完成，否则后续的task就会被取消
+- 如果超时会raise CancelledError，但这个cm会自动转化为TimeoutError，所以**应该对cm捕捉TimeoutError**
+- 可以先设置delay=None，在中途再增加delay（如果一开始还不确定延时是多少）。但注意：Event Loop有一个内部的时间戳，不等于time.time()，所以延迟时间应该是当前EventLoop的时间戳+我们期望的超时时间。**注意区别绝对时间和相对时间**
 
+# 避免阻塞函数
 
+> bypass_block.py
+
+为了不阻塞，常规的time.sleep改成了asyncio.sleep，常规的http get变成了aiohttp等；但如果有些阻塞型IO操作没有人将其改为非阻塞的怎么办？
+
+通过`asyncio.to_thread(func, args, kw)`可以将阻塞型函数发送到其他线程，这样就不会阻塞event loop所在的线程。
+
+对于CPython解释器，这只能解决IO bound，换成其他解释器可以解决CPU bound。

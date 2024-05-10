@@ -13,13 +13,21 @@ async def func1(interval, string):
 
 
 async def main_gather():
-    await asyncio.gather(* [func1(random.random()*20+5, f"task_{i + 1}") for i in range(10)] )
+    task_set = set()
+    for i in range(10):
+        coro = func1(random.random()*5+3, f"task_{i + 1}")
+        task = asyncio.create_task(coro)
+        task_set.add(task)
+    await asyncio.gather(* task_set )
 
 
 async def main_tg():
     async with asyncio.TaskGroup() as tg:
+        task_set = set()
         for i in range(10):
-            tg.create_task(func1(random.random()*20+5, f"task_{i + 1}"))
+            coro = func1(random.random()*5+3, f"task_{i + 1}")
+            task = tg.create_task(coro)
+            task_set.add(task)
 
 
 if __name__ == '__main__':

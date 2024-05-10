@@ -10,11 +10,22 @@
 # TODO
 
 - [ ] 对象有一个`__str__()`方法，打印的时候可以打印对应的**字符串**
+
 - [ ] slice
+
 - [ ] enumerate, zip
+
 - [ ] range
+
 - [ ] more about super
+
 - [x] more singleton
+
+- [ ] copy
+
+- [ ] with
+
+  
 
 # Basic Usage
 
@@ -1223,7 +1234,7 @@ print(recursion(5))
 > TODO: 
 > - [ ] weakref: https://zhuanlan.zhihu.com/p/425426122
 > - [ ] threading
-> - [x] multiprocessing: 在外部
+> - [x] multiprocessing
 > - [ ] re
 > - [ ] time
 > - [ ] bisect
