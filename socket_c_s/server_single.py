@@ -7,7 +7,7 @@ class Server:
         self.port = port
         self.name = name
         self.socket = socket(AF_INET, SOCK_STREAM)
-        self.socket.bind(('', self.port))
+        self.socket.bind(('127.0.0.1', self.port))
         self.socket.listen(1)
 
         print(f"server({self.name}) is LISTENING.")
@@ -41,7 +41,7 @@ class Server:
             try:
                 self._exec()
             except ConnectionResetError:
-                pass
+                print(f"Connect reset.")
 
 
 if __name__ == '__main__':

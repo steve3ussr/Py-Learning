@@ -1,28 +1,41 @@
 import asyncio
 
-async def handle_echo(reader, writer):
-    data = await reader.read(100)
-    message = data.decode()
-    addr = writer.get_extra_info('peername')
 
-    print(f"Received {message!r} from {addr!r}")
+async def handler(reader, writer):
+    try:
+        while True:
+            data = await reader.readline()
+            message = data.decode()
+            addr = writer.get_extra_info('peername')
 
-    print(f"Send: {message!r}")
-    writer.write(data)
-    await writer.drain()
+            if not message or message.lower().strip() == 'quit':
+                break
 
-    print("Close the connection")
-    writer.close()
-    await writer.wait_closed()
+            message = message.upper()
+            writer.write(message.encode())
+            await writer.drain()
+
+            # print(f"Received {message} from {addr}, Send: {message}")
+
+    except ConnectionResetError:
+        print('Connection RST, maybe cli closed. ')
+
+    finally:
+        print("Close the connection")
+
+        if not writer.is_closing():
+            writer.close()
+            await writer.wait_closed()
+
 
 async def main():
-    server = await asyncio.start_server(
-        handle_echo, '127.0.0.1', 8888)
-
-    addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
-    print(f'Serving on {addrs}')
+    server = await asyncio.start_server(handler, '127.0.0.1', 13000, limit=65536*2)
+    host, port = server.sockets[0].getsockname()
+    print(f'Serving on {host} @ {port}')
 
     async with server:
         await server.serve_forever()
 
-asyncio.run(main())
+
+if __name__ == '__main__':
+    asyncio.run(main())

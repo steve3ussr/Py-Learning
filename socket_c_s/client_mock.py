@@ -3,43 +3,25 @@ import time
 from client import Client
 
 
-class ClientMock:
+class ClientMock(Client):
     def __init__(self, name=str(time.time()), tasks=()):
-        self.name = name
-        self.svr_addr = '127.0.0.1'
-        self.svr_port = 13000
-        self.socket = socket(AF_INET, SOCK_STREAM)
+        super().__init__(name)
         self.tasks = tasks
 
-    def _connect(self):
-        try:
-            self.socket.connect((self.svr_addr, self.svr_port))
-            print(f"{self.name} connected. (self: {self.socket})")
-        except ConnectionRefusedError:
-            print(f'Client({self.name}) cannot connect to server ({self.svr_addr} @ {self.svr_port})')
-            raise
-
     def _exec(self):
-        for interval, sentence in self.tasks:
-            self.socket.send(sentence.encode())
-            print(f'Client({self.name}) send: {sentence}')
-            if sentence.lower().strip() == 'quit':
+        for interval, message in self.tasks:
+
+            if message.lower().strip() == 'quit':
                 break
 
-            res = self.socket.recv(1024)
-            print(f"From server to {self.name}:   {res.decode()}")
-            time.sleep(interval)
+            if message and message[-1] != '\n':
+                message += '\n'
 
-    def start(self):
-        try:
-            self._connect()
-            self._exec()
-        except ConnectionRefusedError:
-            print('Connect Error!')
-        except Exception as e:
-            print(f"Unexpected Error: {e.args}")
-        finally:
-            print(f'Client({self.name}) closed. ')
+            self.socket.send(message.encode())
+            res = self.socket.recv(1024)
+            # print(f"From server to {self.name}:  {message} --> {res.decode()}")
+
+            time.sleep(interval)
 
 
 if __name__ == '__main__':

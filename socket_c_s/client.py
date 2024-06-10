@@ -10,15 +10,11 @@ class Client:
         self.socket = socket(AF_INET, SOCK_STREAM)
 
     def _connect(self):
-        try:
-            self.socket.connect((self.svr_addr, self.svr_port))
-        except ConnectionRefusedError:
-            print(f'Client cannot connect to server ({self.svr_addr} @ {self.svr_port})')
-            raise
+        self.socket.connect((self.svr_addr, self.svr_port))
 
     def _exec(self):
         while True:
-            sentence = input("enter single-line string: ")
+            sentence = input("enter single-line string: ") + '\n'
             self.socket.send(sentence.encode())
 
             if sentence.lower().strip() == 'quit':
@@ -32,7 +28,9 @@ class Client:
             self._connect()
             self._exec()
         except ConnectionRefusedError:
-            print('Connect Error!')
+            print('Connect Refused Error! (maybe server refused. )')
+        except Exception as e:
+            print(f"Unexpected Error: {e.args}")
         finally:
             print(f'Client({self.name}) closed. ')
 
