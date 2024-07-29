@@ -48,15 +48,13 @@ def dp1_match_coin(coin_list, change):
     dp[0] = (0, [])
 
     for coin in coin_list:
-        for y in range(1, change+1):
-            if 1 + dp[y-coin][0] < dp[y][0]:
-                dp[y] = (1 + dp[y-coin][0], dp[y-coin][1] + [coin])
+        for y in range(1, change + 1):
+            if 1 + dp[y - coin][0] < dp[y][0]:
+                dp[y] = (1 + dp[y - coin][0], dp[y - coin][1] + [coin])
             else:
                 dp[y] = (dp[y][0], dp[y][1])
 
     return dp[-1]
-
-
 
 
 if __name__ == '__main__':
