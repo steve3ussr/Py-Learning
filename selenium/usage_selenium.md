@@ -1,14 +1,16 @@
 # TODO
 
 - [x] WebdriverWait
-- [ ] Wait for the new tab to finish loading content
+- [x] Wait for the new tab to finish loading content
 - [ ] from selenium.webdriver.support import expected_conditions as EC
-- [ ] execute scripts
+- [ ] execute scripts  
 - [x] cookie, add
 - [x] css selector
 - [x] xpath向前向后查找, 可以通过子元素定位父元素
 - [ ] actions
 - [ ] headless
+- [ ] agent
+- [ ] 
 
 
 
