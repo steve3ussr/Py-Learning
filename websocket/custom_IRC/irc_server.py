@@ -20,8 +20,14 @@ class MsgInfo:
     content: str
 
 
-class DuplicateWindowError(BaseException):pass
-class MaxUserError(BaseException): pass
+class BeforeJoinError(BaseException):
+    """
+    Before join: USER_DICT, USER_LIVE status are not changed.
+    """
+    pass
+class DuplicateWindowError(BeforeJoinError):pass
+class MaxUserError(BeforeJoinError): pass
+class UnexpectedEventError(BaseException): pass
 
 
 USER_DICT = defaultdict(UserInfo)
@@ -32,15 +38,16 @@ MSG_CACHE = deque(maxlen=10)
 
 
 async def user_connect(conn: ServerConnection):
+    print('user_connect')
     user_ip, user_port = conn.remote_address
 
     """
     X in dict:
-        X status=1     close window
+        X status=1     duplicated, close window
         X status=0     activate
     X not in dict:
         X register     register and activate
-        X max len      close window, raise
+        X max len      close window
     """
     if user_ip in USER_DICT and USER_DICT[user_ip].status == 1:
         await conn.send(json.dumps({'type': 'alert_and_quit',
@@ -52,10 +59,10 @@ async def user_connect(conn: ServerConnection):
             await conn.send(json.dumps({'type': 'alert_and_quit',
                                         'msg': "Max user number reached, cannot connect to IRC server. "}))
             raise MaxUserError
-        else:
-            await conn.send(json.dumps({'type': 'req_username'}))
-            data = json.loads(await conn.recv())
-            USER_DICT[user_ip] = UserInfo(name=data['username'])
+        else:  # new user!
+            print('new user')
+            username = await user_register(conn)
+            USER_DICT[user_ip] = UserInfo(name=username)
 
     # activate
     user = USER_DICT[user_ip]
@@ -73,13 +80,41 @@ async def user_connect(conn: ServerConnection):
                         f"{cnt} user{'s' if cnt>1 else ''} online. ")
 
 
+async def user_register(conn: ServerConnection):
+    print('user try to register')
+    status = 'un-registered'
+    while True:
+        await conn.send(json.dumps({'type': 'req_username',
+                                    'status': status}))
+        status = 'un-registered'
+
+        data = json.loads(await conn.recv())
+        if 'client_cancel' in data:
+            raise BeforeJoinError
+
+        username = data['username']
+        for v in USER_DICT.values():
+            if v.name == username:
+                status = 'duplicated name'
+                break
+        else:
+            return username
+
+
+
 async def user_disconnect(conn: ServerConnection):
-    user = USER_DICT[conn.remote_address[0]]
+    print('user disconnect')
+    user_ip = conn.remote_address[0]
+
+    if user_ip not in USER_DICT:
+        return
+
+    user = USER_DICT[user_ip]
     user.status = 0
     if conn in USER_LIVE:
         USER_LIVE.remove(conn)
     cnt = len(USER_LIVE)
-    await sys_broadcast(f"{user.name} left, {cnt} user{'s' if cnt>1 else ''} online. ")
+    await sys_broadcast(f"{user.name} left, {cnt} user{'s' if cnt > 1 else ''} online. ")
 
 
 async def timer_save_msg():
@@ -89,7 +124,6 @@ async def timer_save_msg():
             while MSG_LIST:
                 msg = MSG_LIST.popleft()
                 f.write(f"[{msg.ftime} {msg.sender}]: {msg.content}")
-
 
 
 async def sys_broadcast(msg_raw: str):
@@ -119,25 +153,27 @@ async def user_broadcast(conn: ServerConnection, msg_raw: str):
 
 
 async def handler(conn: ServerConnection):
+    print('start a handler')
     try:
         await user_connect(conn)
 
         async for event_raw in conn:
             event = json.loads(event_raw)
-
             if event['type'] == 'send':
                 msg = event['msg']
                 await user_broadcast(conn, msg)
+            else:
+                raise UnexpectedEventError  # TODO
 
-    except DuplicateWindowError:
+    except BeforeJoinError:
+        await conn.close()
         await conn.wait_closed()
-    except MaxUserError:
-        await conn.wait_closed()
 
-    finally:
-        if conn:
-            await user_disconnect(conn)
+    except UnexpectedEventError as e:
+        print(e)
 
+    else:
+        await user_disconnect(conn)
 
 
 async def main():
